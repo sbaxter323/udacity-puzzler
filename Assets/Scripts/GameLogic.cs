@@ -11,7 +11,7 @@ public class GameLogic : MonoBehaviour {
 	public GameObject eventSystem;
 	public GameObject startUI, restartUI;
 	public GameObject startPoint, playPoint, restartPoint;
-	public GameObject casualLengthText, challengeLengthText;
+	public GameObject puzzleLengthText;
 
 	public int puzzleLength = 1; //How many times we light up.  This is the difficulty factor.  The longer it is the more you have to memorize in-game.
 	public float puzzleSpeed = 1f; //How many seconds between puzzle display pulses
@@ -19,10 +19,18 @@ public class GameLogic : MonoBehaviour {
 
 	public Orb dungeonOrbPrefab;
 
+	// Orb Positioning
 	public float xOffset;
 	public float yOffset;
 	public float zOffset;
 	public Vector3 orbCenter; // = new Vector3 (-1.0f, -0.5f, 0.0f);
+
+	// Orb Movement
+	public float baseSpeed;
+	public float minX;
+	public float maxX;
+	public float minY;
+	public float maxY;
 
 	private List<Orb> puzzleSpheres; //A list to hold our dynamically generated puzzle spheres
 	public int numSpheres = 5;
@@ -70,11 +78,8 @@ public class GameLogic : MonoBehaviour {
 	}
 
 	public void setStartUIText(){
-		UnityEngine.UI.Text casualText = casualLengthText.GetComponent<Text> ();
-		casualText.text = "Puzzle Length: " + puzzleLength;
-		UnityEngine.UI.Text challengeText = challengeLengthText.GetComponent<Text> ();
-		challengeText.text = "Puzzle Length: " + (puzzleLength+1);
-
+		UnityEngine.UI.Text lengthText = puzzleLengthText.GetComponent<Text> ();
+		lengthText.text = "Puzzle Length: " + puzzleLength;
 	}
 
 	public void solutionCheck(int playerSelectionIndex) { //We check whether or not the passed index matches the solution index
@@ -106,7 +111,7 @@ public class GameLogic : MonoBehaviour {
 
 	public void setOrbMovement(bool b){
 		for (int i = 0; i < puzzleSpheres.Count; i++) {
-			puzzleSpheres [i].setMovementEnabled (b);
+			puzzleSpheres [i].setMovementEnabled (b, baseSpeed);
 		}
 	}
 
@@ -118,7 +123,6 @@ public class GameLogic : MonoBehaviour {
 	}
 
 	public void startPuzzleChallenge() {
-		puzzleLength++;
 		puzzleOrder = new int[puzzleLength]; //Set the size of our array to the declared puzzle length
 		generatePuzzleSequence (); //Generate the puzzle sequence for this playthrough
 		movementEnabled = true;
@@ -196,13 +200,13 @@ public class GameLogic : MonoBehaviour {
 	private void createOrb(Vector3 orbPosition, int direction) {
 		Orb orbInstance = Instantiate (dungeonOrbPrefab) as Orb;
 		orbInstance.setStartingPosition(orbPosition, direction);
+		orbInstance.setMaxMovementValues (minX, maxX, minY, maxY);
 		puzzleSpheres.Add(orbInstance);
 		orbInstance.GetComponent<lightUp> ().setIndex (puzzleSpheres.Count - 1);
 	}
 
 		
 	public void resetPuzzle() { //Reset the puzzle sequence
-		player.transform.position = startPoint.transform.position;
 		//toggleUI ();
 		/*iTween.MoveTo (player, 
 			iTween.Hash (
@@ -216,12 +220,29 @@ public class GameLogic : MonoBehaviour {
 		resetGame ();
 	}
 
+	public void restartReset()
+	{
+		puzzleLength = 2;
+		resetGame ();
+	}
+
+	public void restartStayHere()
+	{
+		resetGame ();
+	}
+	public void restartNext()
+	{
+		puzzleLength++;
+		resetGame ();
+	}
+
+
 	public void resetGame() {
+		player.transform.position = startPoint.transform.position;
 		restartUI.SetActive (false);
-		setStartUIText ();
 		startUI.SetActive (true);
 		playerWon = false;
-		puzzleLength++;
+		setStartUIText ();
 		setOrbMovement (false);
 		resetOrbPosition ();
 		//generatePuzzleSequence (); //Generate the puzzle sequence for this playthrough.  
